@@ -1,0 +1,34 @@
+# Requires kube-prometheus-stack (Prometheus Operator) installed via Helm in the
+# `monitoring` namespace: helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: blogapp-backend
+  namespace: blogapp
+  labels:
+    release: kube-prometheus-stack   # must match the Prometheus Operator's serviceMonitorSelector
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  namespaceSelector:
+    matchNames: [blogapp]
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-metrics
+  namespace: blogapp
+  labels:
+    app: backend
+spec:
+  selector:
+    app: backend
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000

@@ -1,0 +1,33 @@
+# Requires the AWS Load Balancer Controller add-on installed on the EKS cluster,
+# and an ACM certificate ARN for HTTPS.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: blogapp-ingress
+  namespace: blogapp
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/certificate-arn: "<ACM_CERTIFICATE_ARN>"
+    alb.ingress.kubernetes.io/healthcheck-path: "/"
+    alb.ingress.kubernetes.io/group.name: blogapp
+spec:
+  rules:
+    - host: blog.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port: { number: 5000 }
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port: { number: 80 }

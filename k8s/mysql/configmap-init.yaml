@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-script
+  namespace: blogapp
+data:
+  init.sql: |
+    -- Injected from database/init.sql at build/deploy time via CI (kubectl create configmap --from-file)
+    -- Placeholder retained here so `kubectl apply -k` works standalone for demo purposes.
+    CREATE DATABASE IF NOT EXISTS blogdb;

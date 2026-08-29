@@ -1,0 +1,37 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: blogapp-alerts
+  namespace: blogapp
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: blogapp.rules
+      rules:
+        - alert: BackendHighErrorRate
+          expr: |
+            sum(rate(http_request_duration_seconds_count{status=~"5..", route!=""}[5m]))
+            /
+            sum(rate(http_request_duration_seconds_count[5m])) > 0.05
+          for: 5m
+          labels: { severity: warning }
+          annotations:
+            summary: "Backend 5xx error rate above 5%"
+            description: "More than 5% of backend requests are failing over the last 5 minutes."
+
+        - alert: BackendPodCrashLooping
+          expr: increase(kube_pod_container_status_restarts_total{namespace="blogapp",container="backend"}[15m]) > 3
+          for: 5m
+          labels: { severity: critical }
+          annotations:
+            summary: "Backend pod restarting repeatedly"
+            description: "A backend pod has restarted more than 3 times in 15 minutes."
+
+        - alert: MySQLDown
+          expr: absent(up{job="mysql-exporter"} == 1)
+          for: 2m
+          labels: { severity: critical }
+          annotations:
+            summary: "MySQL exporter target missing"
+            description: "Prometheus cannot scrape the MySQL exporter; the database may be unreachable."
